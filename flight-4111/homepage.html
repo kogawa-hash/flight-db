@@ -1,0 +1,262 @@
+{% extends 'navbar.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Search</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f8f8;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .flight-search-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px;
+        }
+
+        .flight-search-container select, .flight-search-container input {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            width: 30%;
+            box-sizing: border-box; 
+            transition: all 0.3s ease;
+        }
+
+        .flight-search-container input[type="date"] {
+            width: 30%;
+        }
+
+        .flight-search-container select {
+            background-color: #fff;
+        }
+
+        .search-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background-color: #45a049;
+        }
+
+        .search-btn:focus {
+            outline: none;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 14px;
+            text-align: center;
+            display: none; 
+        }
+
+        .additional-row {
+            margin-top: 20px;
+            display: none; 
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin: 0 20px;
+        }
+
+        .additional-row select {
+            width: 30%;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: #f4f4f4;
+        }
+
+        .additional-row select:hover {
+            border-color: #4CAF50;
+        }
+
+        #resultsContainer {
+            margin: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        td {
+            background-color: #fff;
+        }
+
+        select:disabled {
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <h1>Search for Flights</h1>
+    <div class="flight-search-container">
+        <select id="from" name="from">
+            <option value="">Select From</option>
+            {% for city, name, code in deps %}
+            <option value="{{ code }}">{{ city }}, {{ name }} ({{ code }})</option>
+            {% endfor %}
+        </select>
+    
+        <select id="to" name="to">
+            <option value="">Select To</option>
+            {% for city, name, code in arr %}
+            <option value="{{ code }}">{{ city }}, {{ name }} ({{ code }})</option>
+            {% endfor %}
+        </select>
+    
+        <input type="date" id="date" name="date" min="2013-01-01" max="2013-12-31">
+    
+        <button class="search-btn" id="searchBtn">Search Flights</button>
+    </div>    
+    
+    <div id="errorMessage" class="error-message">
+        Please fill out all fields.
+    </div>
+
+    <div class="additional-row" id="additionalRow">
+        <select id="carrierType" name="carrierType">
+            <option value="" disabled selected>Filter by Carrier Type</option>
+        </select>
+
+        <select id="departureTime" name="departureTime">
+            <option value="" disabled selected>Filter by Departure Time</option>
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+        </select>
+
+        <select id="arrivalTime" name="arrivalTime">
+            <option value="" disabled selected>Filter by Arrival Time</option>
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+        </select>
+    </div>
+
+    <div id="resultsContainer"></div>
+
+    <script>
+        $(document).ready(function() {
+            $('#additionalRow').hide();
+            $('#errorMessage').hide();
+
+            $('#searchBtn').click(function () {
+                var from = $('#from').val();
+                var to = $('#to').val();
+                var date = $('#date').val();
+
+
+                if (from === "" || to === "" || date === "") {
+                    $('#errorMessage').show();
+                    return false;
+                }
+
+                $('#errorMessage').hide();
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/search-flights',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        from: from,
+                        to: to,
+                        date: date
+                    }),
+                    success: function (response) {
+                        $('#additionalRow').show();
+                        displayFlights(response.flights);
+                    },
+                    error: function () {
+                        alert("Error retrieving flights.");
+                    }
+                });
+            });
+
+            function displayFlights(flights) {
+                let html = '';
+
+                if (flights.length === 0) {
+                    html = '<p>No flights found for this route and date.</p>';
+                } else {
+                    html += '<table><tr><th>Flight</th><th>Airline</th><th>Departure Time</th><th>Arrival Time</th><th>Tailnum</th><th>Distance (km)</th><th>Departure Airport</th><th>Arrival Airport</th><th>Add Flight</th></tr>';
+                        flights.forEach(flight => {
+                            html += `<tr>
+                            <td>${flight.flight_id}</td>
+                            <td>${flight.airline}</td>
+                            <td>${flight.departure_time}</td>
+                            <td>${flight.arrival_time}</td>
+                            <td>${flight.tailnum}</td>
+                            <td>${flight.distance}</td>
+                            <td>${flight.dep_airport}</td>
+                            <td>${flight.arr_airport}</td>
+                            <td><button class="add-btn" data-id="${flight.flight_id}">Add</button></td>
+                        </tr>`;
+                    });
+                    html += '</table>';
+                }
+
+                $('#resultsContainer').html(html);
+            }
+        });
+
+        $(document).on('click', '.add-btn', function () {
+        const flightId = $(this).data('id');
+
+        $.ajax({
+            type: 'POST',
+            url: '/add-booking',
+            contentType: 'application/json',
+            data: JSON.stringify({ flight_id: flightId }),
+            success: function (response) {
+                alert(response.message);
+                window.location.href = '/my-bookings';
+                
+            },
+            error: function () {
+                alert("Failed to add booking.");
+            }
+        });
+    });
+
+        
+
+
+    </script>
+</body>
+</html>
+{% endblock %}

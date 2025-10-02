@@ -1,0 +1,109 @@
+{% extends 'navbar.html' %}
+
+{% block content %}
+<style>
+.page-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.custom-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.custom-table thead {
+    background-color: #79db6e;
+    color: white;
+    text-transform: uppercase;
+}
+
+.custom-table th, .custom-table td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.custom-table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+.delete-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+}
+
+.delete-btn:hover {
+    background-color: #c82333;
+}
+
+.alert {
+    font-size: 1.2rem;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+</style>
+<div class="container mt-5">
+    {% if passenger %}
+        {% set p = passenger[0] %}
+        <div class="text-center">
+            <h1 class="mb-3 page-title">Bookings for {{ p.last_name }}, {{ p.first_name }}</h1>
+            <h4 class="text-muted">Email: {{ p.email }}</h4>
+        </div>
+    {% endif %}
+
+    {% if bookings %}
+        <div class="table-responsive mt-4">
+            <table class="table custom-table">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Flight ID</th>
+                        <th>Airline</th>
+                        <th>Departure</th>
+                        <th>Arrival</th>
+                        <th>Tail Number</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Distance (km)</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td>{{ booking.booking_id }}</td>
+                        <td>{{ booking.flight_id }}</td>
+                        <td>{{ booking.airline }}</td>
+                        <td>{{ booking.departure_time }}</td>
+                        <td>{{ booking.arrival_time }}</td>
+                        <td>{{ booking.tailnum }}</td>
+                        <td>{{ booking.dep_airport_name }} ({{booking.dep_airport_city}}) ({{booking.dep_airport_code}})</td>
+                        <td>{{ booking.arr_airport_name }} ({{booking.arr_airport_city}}) ({{booking.arr_airport_code}})</td>
+                        <td>{{ booking.distance }}</td>
+                        <td>
+                            <form action="{{ url_for('delete_booking') }}" method="POST" class="d-inline">
+                                <input type="hidden" name="booking_id" value="{{ booking.booking_id }}">
+                                <button type="submit" class="btn btn-danger btn-sm delete-btn">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-warning text-center mt-4">
+            <p>No bookings found.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

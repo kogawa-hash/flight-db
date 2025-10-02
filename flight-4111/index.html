@@ -1,0 +1,44 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+
+<body>
+  <h1>Flights Login Page</h1>
+  <form id="loginForm" action="/homepage" method="POST">
+    <label for="firstName">First Name:</label>
+    <input type="text" id="firstName" name="firstName"><br><br>
+
+    <label for="lastName">Last Name:</label>
+    <input type="text" id="lastName" name="lastName"><br><br>
+
+    <label for="email">Email Address:</label>
+    <input type="email" id="email" name="email"><br><br>
+
+    <button type="submit">Submit</button>
+  </form>
+
+</body>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+    $('#loginForm').on('submit', function(e) {
+      e.preventDefault()
+
+      $.post($(this).attr('action'), $(this).serialize(), function(response) {
+      $('#loginForm')[0].reset();
+      window.location.href = "/homepage";
+      }).fail(function() {
+        alert("Form submission failed.");
+      });
+    });
+  });
+</script>
+
+
+</html>
